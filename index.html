@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MediaFire Password Cloud</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            400: '#818cf8',
+                            500: '#6366f1',
+                            600: '#4f46e5',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #080c14;
+            color: #f3f4f6;
+        }
+        
+        .glass-panel {
+            background: rgba(17, 24, 39, 0.65);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        
+        .glass-card {
+            background: rgba(22, 31, 49, 0.5);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: all 0.25s ease;
+        }
+        
+        .glass-card:hover {
+            background: rgba(30, 41, 65, 0.7);
+            border-color: rgba(99, 102, 241, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .glass-modal {
+            background: rgba(13, 18, 30, 0.95);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col antialiased">
+
+    <div class="fixed inset-0 pointer-events-none overflow-hidden z-0">
+        <div class="absolute -top-40 -left-40 w-96 h-96 bg-purple-600/20 rounded-full blur-[128px]"></div>
+        <div class="absolute -bottom-40 -right-20 w-96 h-96 bg-indigo-600/20 rounded-full blur-[128px]"></div>
+    </div>
+
+    <header class="sticky top-0 z-30 glass-panel border-b border-white/10 px-6 py-4 flex items-center justify-between">
+        <div class="flex items-center space-x-3 cursor-pointer" onclick="navigateTo('root')">
+            <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-600 via-indigo-500 to-cyan-400 flex items-center justify-center shadow-lg shadow-brand-500/20">
+                <i data-lucide="folder-lock" class="w-5 h-5 text-white"></i>
+            </div>
+            <div>
+                <span class="text-xl font-bold bg-gradient-to-r from-white via-gray-200 to-gray-400 bg-clip-text text-transparent">DedetStorage</span>
+                <span class="text-xs text-brand-400 bg-brand-500/10 border border-brand-500/20 px-2 py-0.5 rounded-full ml-2">2-Folder Mode</span>
+            </div>
+        </div>
+
+        <div class="flex items-center space-x-3">
+            <button onclick="openUploadModal()" class="flex items-center space-x-2 bg-gradient-to-r from-brand-600 to-indigo-600 hover:from-brand-500 hover:to-indigo-500 text-white px-4 py-2 rounded-xl text-sm font-medium shadow-lg transition-all">
+                <i data-lucide="upload-cloud" class="w-4 h-4"></i>
+                <span>Upload File</span>
+            </button>
+        </div>
+    </header>
+
+    <main class="flex-1 max-w-6xl w-full mx-auto p-4 md:p-8 space-y-6 z-10 relative">
+        
+        <!-- Password Notification Card -->
+        <div class="p-4 rounded-2xl glass-card border-brand-500/30 flex flex-col md:flex-row md:items-center justify-between gap-3">
+            <div class="flex items-center space-x-3">
+                <div class="p-2.5 rounded-xl bg-brand-500/20 text-brand-400">
+                    <i data-lucide="key-round" class="w-5 h-5"></i>
+                </div>
+                <div>
+                    <h2 class="text-sm font-bold text-white">Password Di Mana?</h2>
+                    <p class="text-xs text-gray-400 mt-0.5">Password bisa kamu dapatkan di admin DEDETSTORAGE</p>
+                </div>
+            </div>
+            <div class="bg-black/40 border border-white/10 px-3 py-1.5 rounded-xl text-xs font-mono text-cyan-300">
+                Bisa hubungi no admin : <span class="font-bold text-amber-400">+62 815-8692-0400</span>
+            </div>
+        </div>
+
+        <!-- Breadcrumb Path -->
+        <nav class="flex items-center space-x-2 text-sm text-gray-400" id="breadcrumb">
+            <!-- Populated dynamically -->
+        </nav>
+
+        <!-- Folder Explorer Grid -->
+        <div id="explorerGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            <!-- Folders / Files rendered dynamically -->
+        </div>
+
+        <!-- Empty State Container -->
+        <div id="emptyState" class="hidden flex-1 flex flex-col items-center justify-center py-16 text-center">
+            <div class="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mb-4 text-gray-500">
+                <i data-lucide="folder-open" class="w-8 h-8"></i>
+            </div>
+            <h3 class="text-base font-semibold text-gray-300">Folder ini kosong</h3>
+            <p class="text-xs text-gray-500 max-w-sm mt-1">Belum ada file di dalam folder ini.</p>
+        </div>
+
+    </main>
+
+    <div id="passwordModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md hidden opacity-0 transition-opacity duration-200">
+        <div class="glass-modal w-full max-w-md rounded-2xl p-6 shadow-2xl border border-white/10" id="passwordModalCard">
+            <div class="text-center space-y-2">
+                <div class="w-12 h-12 rounded-2xl bg-amber-500/20 border border-amber-500/30 text-amber-400 flex items-center justify-center mx-auto">
+                    <i data-lucide="lock" class="w-6 h-6"></i>
+                </div>
+                <h3 class="text-lg font-bold text-white" id="modalTargetTitle">Folder Terkunci</h3>
+                <p class="text-xs text-gray-400">Masukkan password untuk membuka isi folder ini.</p>
+            </div>
+
+            <form id="passwordForm" onsubmit="handlePasswordSubmit(event)" class="mt-6 space-y-4">
+                <div>
+                    <label class="block text-xs font-medium text-gray-300 mb-1">Password Access</label>
+                    <input type="password" id="folderPasswordInput" required placeholder="Masukkan password..."
+                        class="w-full bg-slate-900/80 border border-white/15 rounded-xl px-4 py-2.5 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-brand-500">
+                    <p id="passwordError" class="text-xs text-rose-400 mt-1.5 hidden flex items-center space-x-1">
+                        <i data-lucide="alert-circle" class="w-3.5 h-3.5"></i>
+                        <span>Password salah. Silakan coba lagi!</span>
+                    </p>
+                </div>
+
+                <div class="flex items-center space-x-3 pt-2">
+                    <button type="button" onclick="closePasswordModal()" class="flex-1 py-2.5 bg-white/5 hover:bg-white/10 text-gray-300 rounded-xl text-sm font-medium">
+                        Batal
+                    </button>
+                    <button type="submit" class="flex-1 py-2.5 bg-brand-600 hover:bg-brand-500 text-white rounded-xl text-sm font-medium">
+                        Buka Folder
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="uploadModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md hidden opacity-0 transition-opacity duration-200">
+        <div class="glass-modal w-full max-w-md rounded-2xl p-6 shadow-2xl border border-white/10">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-base font-bold text-white">Upload File Baru</h3>
+                <button onclick="closeUploadModal()" class="text-gray-400 hover:text-white">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <form onsubmit="handleUploadSubmit(event)" class="space-y-4">
+                <div class="border-2 border-dashed border-white/20 hover:border-brand-500/50 rounded-2xl p-6 text-center cursor-pointer transition-colors bg-white/5" onclick="document.getElementById('fileInput').click()">
+                    <i data-lucide="upload" class="w-8 h-8 text-brand-400 mx-auto mb-2"></i>
+                    <p class="text-xs font-medium text-gray-200">Klik untuk memilih file</p>
+                    <input type="file" id="fileInput" class="hidden" onchange="updateSelectedFileName(this)">
+                </div>
+                <p id="selectedFileName" class="text-xs text-brand-400 font-mono hidden truncate"></p>
+
+                <div class="flex space-x-2 pt-2">
+                    <button type="button" onclick="closeUploadModal()" class="flex-1 py-2 bg-white/5 text-gray-300 rounded-xl text-xs font-medium">Batal</button>
+                    <button type="submit" class="flex-1 py-2 bg-brand-600 hover:bg-brand-500 text-white rounded-xl text-xs font-medium">Upload</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col space-y-2 pointer-events-none"></div>
+
+    <script>
+        /* ====================================================================
+         * 🔑 PENGATURAN PASSWORD (GANTI PASSWORD ANDA DI SINI)
+         * ==================================================================== */
+        const FOLDER_PASSWORDS = {
+            folder_privasi: "112233"  // <-- Silakan ganti password folder "Privasi APK" di sini!
+        };
+        /* ==================================================================== */
+
+
+        // Database Sederhana (Hanya 2 Folder Utama)
+        const fileSystem = {
+            'root': {
+                id: 'root',
+                name: 'Main Storage',
+                folders: ['folder_privasi', 'folder_publik'],
+                files: []
+            },
+            'folder_privasi': {
+                id: 'folder_privasi',
+                name: 'Privasi APK',
+                isFolder: true,
+                isProtected: true,
+                unlocked: false,
+                folders: [],
+                files: ['file_apk_1', 'file_apk_2']
+            },
+            'folder_publik': {
+                id: 'folder_publik',
+                name: 'File Publik (Bebas Akses)',
+                isFolder: true,
+                isProtected: false,
+                unlocked: true,
+                folders: [],
+                files: ['file_manual']
+            }
+        };
+
+        const fileRegistry = {
+            'file_apk_1': {
+                id: 'file_apk_1',
+                name: 'MobileBanking_Mod_v2.apk',
+                size: '42.5 MB',
+                date: 'Sep 23, 2026',
+                downloads: 128,
+                icon: 'box',
+                iconColor: 'text-brand-400'
+            },
+            'file_apk_2': {
+                id: 'file_apk_2',
+                name: 'PrivateVault_Premium.apk',
+                size: '18.1 MB',
+                date: 'Sep 20, 2026',
+                downloads: 85,
+                icon: 'box',
+                iconColor: 'text-indigo-400'
+            },
+            'file_manual': {
+                id: 'file_manual',
+                name: 'Panduan_Penggunaan.pdf',
+                size: '2.4 MB',
+                date: 'Sep 15, 2026',
+                downloads: 300,
+                icon: 'file-text',
+                iconColor: 'text-rose-400'
+            }
+        };
+
+        let currentFolderId = 'root';
+        let navigationStack = ['root'];
+        let pendingTargetFolderId = null;
+
+        window.addEventListener('DOMContentLoaded', () => {
+            renderExplorer();
+            renderBreadcrumbs();
+            lucide.createIcons();
+        });
+
+        function renderExplorer() {
+            const container = document.getElementById('explorerGrid');
+            const emptyState = document.getElementById('emptyState');
+            container.innerHTML = '';
+
+            const currentFolder = fileSystem[currentFolderId];
+            const folderIds = (currentFolder && currentFolder.folders) ? currentFolder.folders : [];
+            const fileIds = (currentFolder && currentFolder.files) ? currentFolder.files : [];
+
+            if (folderIds.length === 0 && fileIds.length === 0) {
+                emptyState.classList.remove('hidden');
+                container.classList.add('hidden');
+                return;
+            } else {
+                emptyState.classList.add('hidden');
+                container.classList.remove('hidden');
+            }
+
+            // Render Folder Cards
+            folderIds.forEach(folderId => {
+                const folder = fileSystem[folderId];
+                if (!folder) return;
+                
+                const isLocked = folder.isProtected && !folder.unlocked;
+                const div = document.createElement('div');
+                div.className = 'glass-card p-5 rounded-2xl cursor-pointer group flex flex-col justify-between border border-white/5 hover:border-brand-500/40';
+                div.innerHTML = `
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="w-12 h-12 rounded-xl ${isLocked ? 'bg-amber-500/10 border border-amber-500/20 text-amber-400' : 'bg-brand-500/10 border border-brand-500/20 text-brand-400'} flex items-center justify-center">
+                            <i data-lucide="${isLocked ? 'folder-lock' : 'folder'}" class="w-6 h-6"></i>
+                        </div>
+                        ${isLocked ? `
+                            <span class="text-xs bg-amber-500/10 border border-amber-500/20 text-amber-300 font-medium px-2.5 py-1 rounded-full flex items-center space-x-1">
+                                <i data-lucide="lock" class="w-3 h-3"></i>
+                                <span>Terkunci</span>
+                            </span>
+                        ` : `
+                            <span class="text-xs text-gray-400">${folder.files.length} file</span>
+                        `}
+                    </div>
+                    <div>
+                        <h4 class="text-base font-semibold text-white group-hover:text-brand-300 transition-colors">${folder.name}</h4>
+                        <p class="text-xs text-gray-400 mt-1">${isLocked ? 'Perlu Password untuk Membuka' : 'Akses Bebas Tanpa Password'}</p>
+                    </div>
+                `;
+                div.onclick = () => handleFolderClick(folder.id);
+                container.appendChild(div);
+            });
+
+            // Render File Cards
+            fileIds.forEach(fileId => {
+                const file = fileRegistry[fileId];
+                if (!file) return;
+
+                const div = document.createElement('div');
+                div.className = 'glass-card p-5 rounded-2xl group flex flex-col justify-between border border-white/5';
+                div.innerHTML = `
+                    <div class="flex items-center space-x-3 mb-4">
+                        <div class="w-10 h-10 rounded-xl bg-white/5 border border-white/10 ${file.iconColor} flex items-center justify-center shrink-0">
+                            <i data-lucide="${file.icon}" class="w-5 h-5"></i>
+                        </div>
+                        <div class="truncate">
+                            <h4 class="text-sm font-medium text-white truncate">${file.name}</h4>
+                            <p class="text-xs text-gray-400">${file.size}</p>
+                        </div>
+                    </div>
+                    <button onclick="downloadFile('${file.name}')" class="w-full py-2 bg-brand-600/30 hover:bg-brand-600 border border-brand-500/40 text-brand-200 hover:text-white rounded-xl text-xs font-semibold transition-all flex items-center justify-center space-x-1.5">
+                        <i data-lucide="download" class="w-3.5 h-3.5"></i>
+                        <span>Download File</span>
+                    </button>
+                `;
+                container.appendChild(div);
+            });
+
+            lucide.createIcons();
+        }
+
+        function handleFolderClick(folderId) {
+            const folder = fileSystem[folderId];
+            if (!folder) return;
+
+            if (folder.isProtected && !folder.unlocked) {
+                pendingTargetFolderId = folderId;
+                openPasswordModal(folder.name);
+            } else {
+                navigateTo(folderId);
+            }
+        }
+
+        function openPasswordModal(folderName) {
+            document.getElementById('modalTargetTitle').innerText = `Buka "${folderName}"`;
+            document.getElementById('folderPasswordInput').value = '';
+            document.getElementById('passwordError').classList.add('hidden');
+            
+            const modal = document.getElementById('passwordModal');
+            modal.classList.remove('hidden');
+            setTimeout(() => modal.classList.remove('opacity-0'), 10);
+        }
+
+        function closePasswordModal() {
+            const modal = document.getElementById('passwordModal');
+            modal.classList.add('opacity-0');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+                pendingTargetFolderId = null;
+            }, 200);
+        }
+
+        function handlePasswordSubmit(e) {
+            e.preventDefault();
+            const inputPass = document.getElementById('folderPasswordInput').value;
+            const targetPass = FOLDER_PASSWORDS[pendingTargetFolderId];
+
+            if (inputPass === targetPass) {
+                fileSystem[pendingTargetFolderId].unlocked = true;
+                showToast('Password benar! Folder terbuka.', 'success');
+                const target = pendingTargetFolderId;
+                closePasswordModal();
+                navigateTo(target);
+            } else {
+                document.getElementById('passwordError').classList.remove('hidden');
+            }
+        }
+
+        function navigateTo(folderId) {
+            if (!fileSystem[folderId]) return;
+            currentFolderId = folderId;
+
+            if (folderId === 'root') {
+                navigationStack = ['root'];
+            } else {
+                if (!navigationStack.includes(folderId)) {
+                    navigationStack.push(folderId);
+                }
+            }
+
+            renderBreadcrumbs();
+            renderExplorer();
+        }
+
+        function renderBreadcrumbs() {
+            const container = document.getElementById('breadcrumb');
+            container.innerHTML = '';
+
+            navigationStack.forEach((folderId, idx) => {
+                const folder = fileSystem[folderId];
+                const isLast = idx === navigationStack.length - 1;
+
+                if (idx > 0) {
+                    const sep = document.createElement('i');
+                    sep.setAttribute('data-lucide', 'chevron-right');
+                    sep.className = 'w-4 h-4 text-gray-500';
+                    container.appendChild(sep);
+                }
+
+                const btn = document.createElement('button');
+                btn.className = `text-sm font-medium ${isLast ? 'text-white font-bold cursor-default' : 'text-gray-400 hover:text-brand-300'}`;
+                btn.innerText = folder.name;
+
+                if (!isLast) {
+                    btn.onclick = () => navigateTo(folderId);
+                }
+
+                container.appendChild(btn);
+            });
+
+            lucide.createIcons();
+        }
+
+        function downloadFile(fileName) {
+            showToast(`Mengunduh file: ${fileName}`, 'success');
+        }
+
+        function openUploadModal() {
+            document.getElementById('uploadModal').classList.remove('hidden');
+            setTimeout(() => document.getElementById('uploadModal').classList.remove('opacity-0'), 10);
+        }
+
+        function closeUploadModal() {
+            document.getElementById('uploadModal').classList.add('opacity-0');
+            setTimeout(() => document.getElementById('uploadModal').classList.add('hidden'), 200);
+        }
+
+        function updateSelectedFileName(input) {
+            const nameDisplay = document.getElementById('selectedFileName');
+            if (input.files && input.files[0]) {
+                nameDisplay.innerText = `Terpilih: ${input.files[0].name}`;
+                nameDisplay.classList.remove('hidden');
+            }
+        }
+
+        function handleUploadSubmit(e) {
+            e.preventDefault();
+            const fileInput = document.getElementById('fileInput');
+            const fileName = fileInput.files[0] ? fileInput.files[0].name : 'File_Baru.zip';
+
+            const newId = 'file_' + Date.now();
+            fileRegistry[newId] = {
+                id: newId,
+                name: fileName,
+                size: '12.0 MB',
+                date: 'Baru saja',
+                downloads: 0,
+                icon: 'file',
+                iconColor: 'text-brand-400'
+            };
+
+            if (!fileSystem[currentFolderId].files) {
+                fileSystem[currentFolderId].files = [];
+            }
+            fileSystem[currentFolderId].files.push(newId);
+            closeUploadModal();
+            showToast('File berhasil diupload!', 'success');
+            renderExplorer();
+        }
+
+        function showToast(message, type = 'info') {
+            const toast = document.createElement('div');
+            toast.className = `glass-modal border border-indigo-500/40 bg-indigo-950/90 text-indigo-200 px-4 py-3 rounded-2xl shadow-xl flex items-center space-x-2 text-xs font-medium transition-all duration-300 opacity-0 translate-y-2 pointer-events-auto`;
+            toast.innerHTML = `
+                <i data-lucide="info" class="w-4 h-4 shrink-0"></i>
+                <span>${message}</span>
+            `;
+
+            document.getElementById('toastContainer').appendChild(toast);
+            lucide.createIcons();
+
+            setTimeout(() => toast.classList.remove('translate-y-2', 'opacity-0'), 10);
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-2');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
